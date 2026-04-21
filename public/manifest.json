@@ -1,26 +1,41 @@
 {
   "name": "Aile Kartı",
-  "short_name": "AileKartı",
+  "short_name": "AileKarti",
   "description": "Aile içinde ortak kredi kartı harcama takibi",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#0F0F1A",
+  "background_color": "#F5F7FA",
   "theme_color": "#6366F1",
   "orientation": "portrait",
-  "lang": "tr-TR",
+  "lang": "tr",
   "categories": ["finance", "utilities"],
   "icons": [
     {
       "src": "/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
     },
     {
       "src": "/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
-  ]
+  ],
+  "screenshots": [],
+  "prefer_related_applications": false
 }
