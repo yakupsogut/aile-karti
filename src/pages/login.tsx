@@ -12,7 +12,8 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [mounted, setMounted] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
+  // Ref to avoid stale closure in timeout
+  const firstPinRef = useRef('');
 
   useEffect(() => {
     setMounted(true);
@@ -22,61 +23,67 @@ export default function LoginPage() {
     }
   }, []);
 
-  const currentValue = step === 'confirm' ? confirmPin : pin;
-  const isSetup = step === 'setup';
-  const isConfirm = step === 'confirm';
-
   function handleKey(key: string) {
     if (isLocked) return;
     setError('');
 
     if (key === 'del') {
-      if (isConfirm) setConfirmPin(p => p.slice(0, -1));
-      else setPin(p => p.slice(0, -1));
+      setConfirmPin(p => p.slice(0, -1));
+      setPin(p => p.slice(0, -1));
       return;
     }
 
-    const target = isConfirm ? confirmPin : pin;
-    if (target.length >= 6) return;
-
-    const newVal = target + key;
-    if (isConfirm) setConfirmPin(newVal);
-    else setPin(newVal);
-
-    // Auto-advance
-    if (isSetup && newVal.length === 6) {
-      setStep('confirm');
-    } else if (isEnter && newVal.length === 6) {
-      setTimeout(() => {
-        if (auth.verifyPin(newVal)) {
-          router.push('/dashboard');
-        } else {
-          setIsLocked(auth.isLocked());
-          const attempts = auth.getAttempts();
-          if (attempts >= MAX_ATTEMPTS) {
-            setError('Çok fazla deneme. PIN\'i sıfırla.');
-          } else {
-            setError(`Yanlış PIN. ${MAX_ATTEMPTS - attempts} hakkın kaldı.`);
+    if (key >= '0' || key === '0') {
+      if (step === 'confirm' && confirmPin.length < 6) {
+        const val = confirmPin + key;
+        setConfirmPin(val);
+        if (val.length === 6) {
+          // Compare with ref, not state (avoid stale closure)
+          const first = firstPinRef.current;
+          setTimeout(() => {
+            if (first === val) {
+              auth.setPin(first);
+              router.push('/dashboard');
+            } else {
+              setError("PIN'ler eşleşmiyor.");
+              setConfirmPin('');
+              setPin('');
+              setStep('setup');
+              firstPinRef.current = '';
+            }
+          }, 100);
+        }
+      } else if ((step === 'setup' || step === 'enter') && pin.length < 6) {
+        const val = pin + key;
+        if (step === 'setup') {
+          setPin(val);
+          if (val.length === 6) {
+            firstPinRef.current = val;
+            setStep('confirm');
           }
-          setPin('');
-        }
-      }, 100);
-    } else if (isConfirm && newVal.length === 6) {
-      setTimeout(() => {
-        if (pin === confirmPin) {
-          auth.setPin(pin);
-          router.push('/dashboard');
         } else {
-          setError("PIN'ler eşleşmiyor.");
-          setPin('');
-          setConfirmPin('');
-          setStep('setup');
+          // enter mode
+          setPin(val);
+          if (val.length === 6) {
+            setTimeout(() => {
+              if (auth.verifyPin(val)) {
+                router.push('/dashboard');
+              } else {
+                setIsLocked(auth.isLocked());
+                const attempts = auth.getAttempts();
+                if (attempts >= MAX_ATTEMPTS) {
+                  setError('Çok fazla deneme. PIN\'i sıfırla.');
+                } else {
+                  setError(`Yanlış PIN. ${MAX_ATTEMPTS - attempts} hakkın kaldı.`);
+                }
+                setPin('');
+              }
+            }, 100);
+          }
         }
-      }, 100);
+      }
     }
   }
-
-  const isEnter = step === 'enter';
 
   if (!mounted) {
     return (
@@ -88,6 +95,11 @@ export default function LoginPage() {
       </div>
     );
   }
+
+  const currentValue = step === 'confirm' ? confirmPin : pin;
+  const isSetup = step === 'setup';
+  const isConfirm = step === 'confirm';
+  const isEnter = step === 'enter';
 
   const dots = Array.from({ length: 6 }, (_, i) => (
     <div
@@ -141,19 +153,6 @@ export default function LoginPage() {
         </div>
       )}
 
-      {/* Hidden input for keyboard support */}
-      <input
-        ref={inputRef}
-        style={{ position: 'absolute', opacity: 0, pointerEvents: 'none', width: 1, height: 1 }}
-        inputMode="numeric"
-        pattern="[0-9]*"
-        value=""
-        onKeyDown={(e) => {
-          if (e.key === 'Backspace') handleKey('del');
-          else if (e.key >= '0' && e.key <= '9') handleKey(e.key);
-        }}
-      />
-
       <div style={{
         display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)',
         gap: 10, maxWidth: 260, width: '100%',
@@ -174,8 +173,6 @@ export default function LoginPage() {
                 transition: 'all 0.1s',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}
-              onTouchStart={(e) => (e.currentTarget.style.transform = 'scale(0.95)')}
-              onTouchEnd={(e) => (e.currentTarget.style.transform = 'scale(1)')}
               onMouseDown={(e) => (e.currentTarget.style.transform = 'scale(0.95)')}
               onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
               onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
@@ -186,7 +183,7 @@ export default function LoginPage() {
         })}
       </div>
 
-      {isEnter && (
+      {(isEnter || isConfirm) && (
         <button
           onClick={() => handleKey('del')}
           style={{
@@ -201,9 +198,14 @@ export default function LoginPage() {
 
       {isConfirm && (
         <button
-          onClick={() => { setStep('setup'); setConfirmPin(''); setPin(''); }}
+          onClick={() => {
+            setStep('setup');
+            setConfirmPin('');
+            setPin('');
+            firstPinRef.current = '';
+          }}
           style={{
-            marginTop: 12, background: 'none', border: 'none',
+            marginTop: 8, background: 'none', border: 'none',
             color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer',
             padding: '8px 16px',
           }}
