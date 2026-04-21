@@ -12,6 +12,12 @@ export default function SettingsPage() {
   useEffect(() => {
     setMounted(true);
     setThemeState(getState().theme);
+    // Apply theme on mount (after state is loaded)
+    const currentTheme = getState().theme;
+    const nextTheme = currentTheme === 'dark' ? 'dark' : currentTheme === 'light' ? 'light' : (
+      window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+    );
+    applyTheme(nextTheme);
   }, []);
 
   useEffect(() => {
@@ -91,7 +97,7 @@ export default function SettingsPage() {
     : false;
 
   return (
-    <Layout title="Ayarlar" showTabs={false}>
+    <Layout title="Ayarlar">
       <div className="settings-group">
         <div className="settings-group-title">Görünüm</div>
         <div className="card settings-card">

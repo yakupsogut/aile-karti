@@ -17,7 +17,7 @@ function getInitialTheme(): Theme {
 }
 
 let _state: AppState = {
-  theme: 'system',
+  theme: (typeof window !== 'undefined' ? (localStorage.getItem('ak_theme') as Theme) : 'system') || 'system',
   persons: [],
   cards: [],
   expenses: [],
