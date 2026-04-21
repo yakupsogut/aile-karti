@@ -31,7 +31,7 @@ export default function Dashboard() {
       supabase.from('expenses').select('*, cards(name,last4,cutoff_day,persons(name)), persons(name)').order('date', { ascending: false }),
     ]);
 
-    let instData = { data: [] as Installment[] };
+    let instData: { data: Installment[] } = { data: [] };
     try {
       const r = await supabase.from('installments').select('*');
       instData = { data: r.data || [] };
@@ -42,7 +42,6 @@ export default function Dashboard() {
     const expenses = expensesData.data || [];
     const installments = instData.data || [];
 
-    // Build missing installments
     const expenseIds = new Set(installments.map(i => i.expense_id));
     const missing = expenses.filter(e => !expenseIds.has(e.id));
     if (missing.length > 0) {
@@ -63,8 +62,6 @@ export default function Dashboard() {
       });
       if (toInsert.length > 0) {
         await supabase.from('installments').insert(toInsert);
-        const refreshed = await supabase.from('installments').select('*');
-        setState({ installments: refreshed.data || [] });
       }
     }
 
@@ -77,7 +74,9 @@ export default function Dashboard() {
   if (loading) {
     return (
       <Layout title="Aile Kartı" showTabs={false}>
-        <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-secondary)' }}>Yükleniyor...</div>
+        <div style={{ textAlign: 'center', padding: 60, color: 'var(--text-secondary)', fontSize: 14 }}>
+          Yükleniyor...
+        </div>
       </Layout>
     );
   }
@@ -88,10 +87,11 @@ export default function Dashboard() {
 
   return (
     <Layout title="Aile Kartı">
+      {/* Stats */}
       <div className="stat-grid">
         <div className="stat-card full">
           <div className="stat-label">Bu Ayın Ödemesi</div>
-          <div className="stat-value accent">{money(thisMonthTotal)}</div>
+          <div className="stat-value accent" style={{ fontSize: 26 }}>{money(thisMonthTotal)}</div>
         </div>
         <div className="stat-card">
           <div className="stat-label">Gelecek Aylar</div>
@@ -99,24 +99,32 @@ export default function Dashboard() {
         </div>
         <div className="stat-card">
           <div className="stat-label">Toplam Kişi</div>
-          <div className="stat-value">{persons.length}</div>
+          <div className="stat-value" style={{ fontSize: 18 }}>{persons.length}</div>
         </div>
       </div>
 
+      {/* Person breakdown */}
       {persons.length > 0 && (
         <>
           <div className="section-title">Kişi Bazlı (Bu Ay)</div>
-          <div className="card" style={{ padding: '0 18px' }}>
+          <div className="card" style={{ padding: 0 }}>
             {persons.map((p, i) => {
               const amount = byPerson[p.id] || 0;
               return (
-                <div key={p.id} className="list-item" style={{ borderBottom: i < persons.length - 1 ? '1px solid var(--border)' : 'none' }}>
-                  <div className="person-avatar" style={{ background: getColor(i) }}>{initials(p.name)}</div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 600 }}>{p.name}</div>
-                    <div className="text-xs text-secondary">{amount > 0 ? 'Ödenecek' : 'Borç yok'}</div>
+                <div key={p.id} className="list-item" style={{ padding: '14px 18px' }}>
+                  <div className="person-avatar" style={{ background: getColor(i) }}>
+                    {initials(p.name)}
                   </div>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: amount > 0 ? 'var(--warning)' : 'var(--success)' }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 600, fontSize: 15 }}>{p.name}</div>
+                    <div style={{ fontSize: 12, color: amount > 0 ? 'var(--text-secondary)' : 'var(--success)', marginTop: 2 }}>
+                      {amount > 0 ? 'Ödenecek' : 'Borç yok'}
+                    </div>
+                  </div>
+                  <div style={{
+                    fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 15,
+                    color: amount > 0 ? 'var(--warning)' : 'var(--success)',
+                  }}>
                     {money(amount)}
                   </div>
                 </div>
@@ -126,22 +134,28 @@ export default function Dashboard() {
         </>
       )}
 
+      {/* Card breakdown */}
       {cards.length > 0 && (
         <>
           <div className="section-title">Kart Bazlı (Bu Ay)</div>
-          <div className="card" style={{ padding: '0 18px' }}>
+          <div className="card" style={{ padding: 0 }}>
             {cards.map((c, i) => {
               const amount = byCard[c.id] || 0;
               return (
-                <div key={c.id} className="list-item" style={{ borderBottom: i < cards.length - 1 ? '1px solid var(--border)' : 'none' }}>
+                <div key={c.id} className="list-item" style={{ padding: '14px 18px' }}>
                   <div className="card-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
                   </div>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 600 }}>{c.name}</div>
-                    <div className="text-xs text-secondary">{cardMask(c.last4)} · Kesim günü: {c.cutoff_day}</div>
+                    <div style={{ fontWeight: 600, fontSize: 15 }}>{c.name}</div>
+                    <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>
+                      {cardMask(c.last4)} · Kesim: {c.cutoff_day}
+                    </div>
                   </div>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: amount > 0 ? 'var(--warning)' : 'var(--success)' }}>
+                  <div style={{
+                    fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 15,
+                    color: amount > 0 ? 'var(--warning)' : 'var(--success)',
+                  }}>
                     {money(amount)}
                   </div>
                 </div>
@@ -151,27 +165,34 @@ export default function Dashboard() {
         </>
       )}
 
+      {/* Recent */}
       <div className="section-title">Son Harcamalar</div>
       {recent.length === 0 ? (
-        <div className="empty-state">
-          <div className="empty-state-icon">📭</div>
-          <div className="empty-state-title">Henüz harcama yok</div>
-          <div className="empty-state-text">İlk harcamanı ekle!</div>
+        <div className="card" style={{ textAlign: 'center', padding: 40 }}>
+          <div style={{ fontSize: 40, marginBottom: 12 }}>📭</div>
+          <div style={{ fontWeight: 700, marginBottom: 4 }}>Henüz harcama yok</div>
+          <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>İlk harcamanı ekle!</div>
         </div>
       ) : (
-        <div className="card" style={{ padding: '0 18px' }}>
+        <div className="card" style={{ padding: '0 4px' }}>
           {recent.map((e) => (
             <div key={e.id} className="history-item">
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 600, fontSize: 14 }}>{e.description || 'İsimsiz harcama'}</div>
-                <div className="text-xs text-secondary">
+                <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>
                   {new Date(e.date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })}
                   {' · '}{e.persons?.name || '—'}
                 </div>
               </div>
-              <div style={{ textAlign: 'right' }}>
-                <div className="history-item-amount">{money(e.amount)}</div>
-                {e.installments > 1 && <div className="text-xs text-secondary">×{e.installments} taksit</div>}
+              <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                <div style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 15 }}>
+                  {money(e.amount)}
+                </div>
+                {e.installments > 1 && (
+                  <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 2 }}>
+                    ×{e.installments} taksit
+                  </div>
+                )}
               </div>
             </div>
           ))}

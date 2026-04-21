@@ -89,6 +89,7 @@ img { max-width: 100%; }
   padding: 16px;
   max-width: 480px;
   margin: 0 auto;
+  padding-top: 72px;
   padding-bottom: calc(80px + var(--safe-bottom));
   animation: fadeIn 0.2s ease-out;
 }
@@ -125,14 +126,15 @@ img { max-width: 100%; }
   background: var(--bg-card);
   border-top: 1px solid var(--border);
   display: flex;
-  align-items: flex-start;
+  align-items: center;
+  justify-content: space-around;
   z-index: 100;
 }
 .tab-btn {
-  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 4px;
   padding: 8px 4px;
   color: var(--text-secondary);
@@ -141,6 +143,9 @@ img { max-width: 100%; }
   transition: color 0.15s;
   background: none;
   border: none;
+  cursor: pointer;
+  flex: 1;
+  height: 100%;
 }
 .tab-btn.active { color: var(--accent); }
 .tab-btn-add {
@@ -149,7 +154,6 @@ img { max-width: 100%; }
   border-radius: 50%;
   width: 48px; height: 48px;
   flex: 0 0 48px;
-  margin-top: -12px;
   box-shadow: var(--shadow-md);
 }
 
@@ -235,12 +239,17 @@ img { max-width: 100%; }
   grid-template-columns: 1fr 1fr;
   gap: 12px;
   margin-bottom: 20px;
+  align-items: stretch;
 }
 .stat-card {
   padding: 16px;
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 90px;
 }
 .stat-card.full { grid-column: 1 / -1; }
 .stat-label {
@@ -253,7 +262,7 @@ img { max-width: 100%; }
 }
 .stat-value {
   font-family: var(--font-mono);
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 700;
 }
 .stat-value.accent { color: var(--accent); }
@@ -261,12 +270,12 @@ img { max-width: 100%; }
 .stat-value.warning { color: var(--warning); }
 
 .section-title {
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 700;
   color: var(--text-secondary);
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  margin: 20px 0 12px;
+  letter-spacing: 0.08em;
+  margin: 24px 0 10px;
 }
 
 /* Lists */
@@ -318,7 +327,7 @@ img { max-width: 100%; }
 /* History */
 .history-item {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 12px;
   padding: 14px 0;
   border-bottom: 1px solid var(--border);
@@ -330,6 +339,11 @@ img { max-width: 100%; }
   font-weight: 700;
   text-align: right;
   flex-shrink: 0;
+}
+.history-item-detail {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 2px;
 }
 
 /* Filters */

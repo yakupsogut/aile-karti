@@ -3,6 +3,11 @@ export function money(n: number | null | undefined): string {
   return n.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ₺';
 }
 
+export function moneyC(n: number | null | undefined): string {
+  if (n == null || isNaN(n)) return '₺0,00';
+  return '₺' + n.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
 export function moneyRaw(n: number): string {
   return n.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
