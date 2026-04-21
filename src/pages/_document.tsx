@@ -10,6 +10,18 @@ export default function Document() {
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="Aile Kartı" />
         <meta name="theme-color" content="#6366F1" />
+        {/* Prevent FOUC — set theme before paint */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                var t = localStorage.getItem('ak_theme') || 'system';
+                var dark = t === 'dark' || (t === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                if (dark) document.documentElement.setAttribute('data-theme', 'dark');
+              })();
+            `,
+          }}
+        />
       </Head>
       <body>
         <Main />

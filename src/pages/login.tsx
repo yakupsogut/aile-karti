@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { auth } from '@/lib/auth';
 
@@ -11,32 +11,47 @@ export default function LoginPage() {
   const [step, setStep] = useState<'enter' | 'setup' | 'confirm'>('enter');
   const [error, setError] = useState('');
   const [mounted, setMounted] = useState(false);
+  const [isLocked, setIsLocked] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setMounted(true);
-    if (!auth.isPinSet()) setStep('setup');
+    setIsLocked(auth.isLocked());
+    if (!auth.isPinSet()) {
+      setStep('setup');
+    }
   }, []);
 
-  const handleKey = (key: string) => {
+  const currentValue = step === 'confirm' ? confirmPin : pin;
+  const isSetup = step === 'setup';
+  const isConfirm = step === 'confirm';
+
+  function handleKey(key: string) {
+    if (isLocked) return;
     setError('');
+
     if (key === 'del') {
-      if (step === 'confirm') setConfirmPin((p) => p.slice(0, -1));
-      else setPin((p) => p.slice(0, -1));
+      if (isConfirm) setConfirmPin(p => p.slice(0, -1));
+      else setPin(p => p.slice(0, -1));
       return;
     }
-    if (step === 'confirm' && confirmPin.length < 6) {
-      setConfirmPin((p) => p + key);
-    } else if (step === 'setup' && pin.length < 6) {
-      setPin((p) => p + key);
-    } else if (step === 'enter' && pin.length < 6) {
-      setPin((p) => p + key);
-    }
 
-    if (step === 'enter' && pin.length === 6) {
+    const target = isConfirm ? confirmPin : pin;
+    if (target.length >= 6) return;
+
+    const newVal = target + key;
+    if (isConfirm) setConfirmPin(newVal);
+    else setPin(newVal);
+
+    // Auto-advance
+    if (isSetup && newVal.length === 6) {
+      setStep('confirm');
+    } else if (isEnter && newVal.length === 6) {
       setTimeout(() => {
-        if (auth.verifyPin(pin)) {
+        if (auth.verifyPin(newVal)) {
           router.push('/dashboard');
         } else {
+          setIsLocked(auth.isLocked());
           const attempts = auth.getAttempts();
           if (attempts >= MAX_ATTEMPTS) {
             setError('Çok fazla deneme. PIN\'i sıfırla.');
@@ -46,60 +61,60 @@ export default function LoginPage() {
           setPin('');
         }
       }, 100);
+    } else if (isConfirm && newVal.length === 6) {
+      setTimeout(() => {
+        if (pin === confirmPin) {
+          auth.setPin(pin);
+          router.push('/dashboard');
+        } else {
+          setError("PIN'ler eşleşmiyor.");
+          setPin('');
+          setConfirmPin('');
+          setStep('setup');
+        }
+      }, 100);
     }
+  }
 
-    if (step === 'setup' && pin.length === 6) {
-      setStep('confirm');
-    }
-    if (step === 'confirm' && confirmPin.length === 6) {
-      if (pin === confirmPin) {
-        auth.setPin(pin);
-        router.push('/dashboard');
-      } else {
-        setError("PIN'ler eşleşmiyor. Tekrar dene.");
-        setPin('');
-        setConfirmPin('');
-        setStep('setup');
-      }
-    }
-  };
+  const isEnter = step === 'enter';
 
   if (!mounted) {
     return (
-      <div style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-secondary)' }}>
+      <div style={{
+        minHeight: '100dvh', display: 'flex', alignItems: 'center',
+        justifyContent: 'center', background: 'var(--bg-secondary)',
+      }}>
         <div style={{ color: 'var(--text-secondary)' }}>Yükleniyor...</div>
       </div>
     );
   }
 
-  const isLocked = auth.isLocked();
-  const isSetup = step === 'setup';
-  const isConfirm = step === 'confirm';
+  const dots = Array.from({ length: 6 }, (_, i) => (
+    <div
+      key={i}
+      style={{
+        width: 14, height: 14, borderRadius: '50%',
+        background: i < currentValue.length ? 'var(--accent)' : 'var(--border)',
+        transform: i < currentValue.length ? 'scale(1.2)' : 'scale(1)',
+        transition: 'all 0.15s',
+      }}
+    />
+  ));
 
-  const dots = (val: string) =>
-    Array.from({ length: 6 }, (_, i) => (
-      <div key={i} className={`pin-dot${i < val.length ? ' filled' : ''}`} />
-    ));
-
-  const subtitle = isConfirm
-    ? 'PIN\'ni tekrar gir'
-    : isSetup
-    ? '6 haneli PIN belirle'
-    : error || 'PIN\'ni gir';
+  const title = isConfirm ? "PIN'i Onayla" : isSetup ? "PIN Oluştur" : "PIN Gir";
+  const subtitle = isConfirm ? "PIN'ni tekrar gir" : isSetup ? '6 haneli PIN belirle' : error || "PIN'ni gir";
 
   return (
     <div style={{
-      minHeight: '100dvh',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: 24,
-      background: 'var(--bg-secondary)',
+      minHeight: '100dvh', display: 'flex', flexDirection: 'column',
+      alignItems: 'center', justifyContent: 'center',
+      padding: '24px 16px', background: 'var(--bg-secondary)',
     }}>
       <div style={{ fontSize: 48, marginBottom: 16 }}>💳</div>
       <div style={{ fontSize: 24, fontWeight: 700, marginBottom: 4 }}>Aile Kartı</div>
-      <div style={{ color: 'var(--text-secondary)', marginBottom: 40, textAlign: 'center' }}>{subtitle}</div>
+      <div style={{ color: 'var(--text-secondary)', marginBottom: 40, textAlign: 'center', fontSize: 14 }}>
+        {subtitle}
+      </div>
 
       {isLocked ? (
         <button
@@ -115,29 +130,87 @@ export default function LoginPage() {
           PIN'i Sıfırla
         </button>
       ) : (
-        <>
-          <div className="pin-grid">
-            {dots(isConfirm ? confirmPin : pin)}
-          </div>
-          {error && (
-            <div style={{ color: 'var(--danger)', fontSize: 13, marginBottom: 16, textAlign: 'center' }}>
-              {error}
-            </div>
-          )}
-        </>
+        <div style={{ display: 'flex', gap: 12, marginBottom: 24, justifyContent: 'center' }}>
+          {dots}
+        </div>
       )}
 
-      <div className="pin-keypad">
-        {[1,2,3,4,5,6,7,8,9,'',0,'del'].map((k, i) => {
-          if (k === '') return <div key={i} className="pin-key empty" />;
-          if (k === 'del') return (
-            <button key={i} className="pin-key" onClick={() => handleKey('del')}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 5H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-6"/><path d="M9 14l6-6"/><path d="M15 14l6-6"/></svg>
+      {error && !isLocked && (
+        <div style={{ color: 'var(--danger)', fontSize: 13, marginBottom: 16, textAlign: 'center' }}>
+          {error}
+        </div>
+      )}
+
+      {/* Hidden input for keyboard support */}
+      <input
+        ref={inputRef}
+        style={{ position: 'absolute', opacity: 0, pointerEvents: 'none', width: 1, height: 1 }}
+        inputMode="numeric"
+        pattern="[0-9]*"
+        value=""
+        onKeyDown={(e) => {
+          if (e.key === 'Backspace') handleKey('del');
+          else if (e.key >= '0' && e.key <= '9') handleKey(e.key);
+        }}
+      />
+
+      <div style={{
+        display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)',
+        gap: 10, maxWidth: 260, width: '100%',
+      }}>
+        {[1,2,3,4,5,6,7,8,9,'',0].map((k, i) => {
+          if (k === '') return <div key={i} style={{ height: 56 }} />;
+          return (
+            <button
+              key={i}
+              onClick={() => handleKey(String(k))}
+              style={{
+                height: 56, borderRadius: 12,
+                background: 'var(--bg-card)',
+                border: '1.5px solid var(--border)',
+                fontSize: 20, fontWeight: 600,
+                color: 'var(--text-primary)',
+                cursor: 'pointer',
+                transition: 'all 0.1s',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}
+              onTouchStart={(e) => (e.currentTarget.style.transform = 'scale(0.95)')}
+              onTouchEnd={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+              onMouseDown={(e) => (e.currentTarget.style.transform = 'scale(0.95)')}
+              onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+              onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+            >
+              {k}
             </button>
           );
-          return <button key={i} className="pin-key" onClick={() => handleKey(String(k))}>{k}</button>;
         })}
       </div>
+
+      {isEnter && (
+        <button
+          onClick={() => handleKey('del')}
+          style={{
+            marginTop: 12, background: 'none', border: 'none',
+            color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer',
+            padding: '8px 16px',
+          }}
+        >
+          ← Sil
+        </button>
+      )}
+
+      {isConfirm && (
+        <button
+          onClick={() => { setStep('setup'); setConfirmPin(''); setPin(''); }}
+          style={{
+            marginTop: 12, background: 'none', border: 'none',
+            color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer',
+            padding: '8px 16px',
+          }}
+        >
+          ← Geri
+        </button>
+      )}
     </div>
   );
 }

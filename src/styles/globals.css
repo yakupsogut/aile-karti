@@ -491,3 +491,42 @@ img { max-width: 100%; }
   color: var(--accent);
   font-weight: 500;
 }
+
+/* PIN Entry */
+.pin-grid {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+.pin-keypad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  max-width: 260px;
+  width: 100%;
+}
+.pin-key {
+  height: 56px;
+  border-radius: 12px;
+  background: var(--bg-card);
+  border: 1.5px solid var(--border);
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.1s;
+  user-select: none;
+}
+.pin-key:active {
+  transform: scale(0.95);
+  background: var(--accent-light);
+}
+.pin-key.empty {
+  background: none;
+  border: none;
+  cursor: default;
+}
