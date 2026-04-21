@@ -43,15 +43,18 @@ export function subscribe(fn: (s: AppState) => void): () => void {
 }
 
 export function applyTheme(theme: Theme): void {
+  if (typeof window === 'undefined') return;
   const root = document.documentElement;
   if (theme === 'dark') {
     root.setAttribute('data-theme', 'dark');
   } else if (theme === 'light') {
     root.removeAttribute('data-theme');
   } else {
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    if (prefersDark) root.setAttribute('data-theme', 'dark');
-    else root.removeAttribute('data-theme');
+    if (typeof window !== 'undefined') {
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (prefersDark) root.setAttribute('data-theme', 'dark');
+      else root.removeAttribute('data-theme');
+    }
   }
 }
 

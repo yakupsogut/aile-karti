@@ -408,32 +408,85 @@ img { max-width: 100%; }
 }
 
 /* Settings */
-.settings-group { margin-bottom: 24px; }
+.settings-group { margin-bottom: 20px; }
 .settings-group-title {
   font-size: 11px; font-weight: 700;
   color: var(--text-secondary);
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  margin-bottom: 10px;
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+  padding-left: 4px;
+}
+.settings-card {
+  padding: 0 !important;
+  overflow: hidden;
+}
+.settings-card-danger {
+  border-color: var(--danger-light) !important;
 }
 .settings-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 0;
+  padding: 14px 16px;
   border-bottom: 1px solid var(--border);
   cursor: pointer;
+  transition: background 0.15s;
+  background: var(--bg-card);
 }
 .settings-item:last-child { border-bottom: none; }
+.settings-item-btn {
+  width: 100%;
+  border: none;
+  background: none;
+  font-family: inherit;
+  text-align: left;
+}
+.settings-item-btn:hover { background: var(--bg-secondary); }
+.settings-item-btn:active { opacity: 0.7; }
+.settings-item-danger { color: var(--danger); }
+.settings-item-danger:hover { background: var(--danger-light); }
+.settings-item-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.settings-item-icon {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  background: var(--accent-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+.settings-item-icon-danger {
+  background: var(--danger-light);
+  color: var(--danger);
+}
 .settings-item-text {
   font-size: 15px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--text-primary);
 }
+.settings-item-text-danger { color: var(--danger); }
 .settings-item-desc {
   font-size: 12px;
   color: var(--text-secondary);
   margin-top: 2px;
+}
+.settings-item-arrow {
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+.settings-item-arrow-danger { color: var(--danger); }
+.settings-footer {
+  text-align: center;
+  font-size: 11px;
+  color: var(--text-secondary);
+  padding: 20px 0;
+  opacity: 0.6;
 }
 .toggle-switch {
   width: 48px; height: 28px;
