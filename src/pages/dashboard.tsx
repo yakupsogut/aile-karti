@@ -15,6 +15,63 @@ function getColor(index: number) {
   return PERSON_COLORS[index % PERSON_COLORS.length];
 }
 
+function SkeletonCard() {
+  return (
+    <div className="skeleton-card">
+      <div className="skeleton skeleton-line" style={{ width: '40%' }} />
+      <div className="skeleton skeleton-line" style={{ width: '60%' }} />
+    </div>
+  );
+}
+
+function SkeletonDashboard() {
+  return (
+    <Layout title="Aile Kartı">
+      <div className="stat-grid">
+        <div className="skeleton-card full">
+          <div className="skeleton skeleton-line" style={{ width: '50%' }} />
+          <div className="skeleton skeleton-line" style={{ width: '35%', height: 28 }} />
+        </div>
+        <div className="skeleton-card">
+          <div className="skeleton skeleton-line" style={{ width: '50%' }} />
+          <div className="skeleton skeleton-line" style={{ width: '40%', height: 22 }} />
+        </div>
+        <div className="skeleton-card">
+          <div className="skeleton skeleton-line" style={{ width: '50%' }} />
+          <div className="skeleton skeleton-line" style={{ width: '30%', height: 22 }} />
+        </div>
+      </div>
+
+      <div className="section-title">Kişi Bazlı (Bu Ay)</div>
+      <div className="skeleton-card" style={{ padding: 0 }}>
+        {[1, 2, 3].map(i => (
+          <div key={i} className="skeleton-card" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 18px', borderRadius: 0, border: 'none' }}>
+            <div className="skeleton skeleton-circle" />
+            <div style={{ flex: 1 }}>
+              <div className="skeleton skeleton-line" style={{ width: '50%' }} />
+              <div className="skeleton skeleton-line" style={{ width: '30%', height: 10 }} />
+            </div>
+            <div className="skeleton skeleton-line" style={{ width: '20%', height: 18 }} />
+          </div>
+        ))}
+      </div>
+
+      <div className="section-title">Son Harcamalar</div>
+      <div className="skeleton-card" style={{ padding: 0 }}>
+        {[1, 2, 3, 4].map(i => (
+          <div key={i} className="skeleton-card" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 18px', borderRadius: 0, border: 'none' }}>
+            <div style={{ flex: 1 }}>
+              <div className="skeleton skeleton-line" style={{ width: '60%' }} />
+              <div className="skeleton skeleton-line" style={{ width: '35%', height: 10 }} />
+            </div>
+            <div className="skeleton skeleton-line" style={{ width: '22%', height: 18 }} />
+          </div>
+        ))}
+      </div>
+    </Layout>
+  );
+}
+
 export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const { persons, cards, expenses, summary } = getState();
@@ -72,13 +129,7 @@ export default function Dashboard() {
   }
 
   if (loading) {
-    return (
-      <Layout title="Aile Kartı" showTabs={false}>
-        <div style={{ textAlign: 'center', padding: 60, color: 'var(--text-secondary)', fontSize: 14 }}>
-          Yükleniyor...
-        </div>
-      </Layout>
-    );
+    return <SkeletonDashboard />;
   }
 
   const { thisMonthTotal, futureMonthsTotal, byPerson, byCard, recent } = summary || {
